@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -23,6 +25,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
+
+# ── SERVE FRONTEND ─────────────────────────────────
+@app.get("/")
+def serve_frontend():
+    return FileResponse("index.html")
 
 # ── WORKFLOWS ──────────────────────────────────────────────
 
