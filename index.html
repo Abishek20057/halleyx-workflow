@@ -705,18 +705,22 @@ function addCondRow(field='',op='==',val=''){
       <option value="__custom__" ${!fields.includes(field)&&field?'selected':''}>custom…</option>
     </select>
     <select class="f-op" id="${id}-op">
-      <option value="==" ${op==='=='?'selected':''}>== equals</option>
-      <option value="!=" ${op==='!='?'selected':''}>!= not equals</option>
-      <option value=">" ${op==='>'?'selected':''}&gt; greater than</option>
-      <option value=">=" ${op==='>='?'selected':''}&gt;= greater or equal</option>
-      <option value="<" ${op==='<'?'selected':''}&lt; less than</option>
-      <option value="<=" ${op==='<='?'selected':''}&lt;= less or equal</option>
-      <option value="contains" ${op==='contains'?'selected':''}>contains()</option>
-      <option value="startsWith" ${op==='startsWith'?'selected':''}>startsWith()</option>
+      <option value="==">== equals</option>
+      <option value="!=">!= not equals</option>
+      <option value=">">&#62; greater than</option>
+      <option value=">=">&#62;= greater or equal</option>
+      <option value="<">&#60; less than</option>
+      <option value="<=">&#60;= less or equal</option>
+      <option value="contains">contains()</option>
+      <option value="startsWith">startsWith()</option>
+      <option value="endsWith">endsWith()</option>
     </select>
     <input class="f-val" id="${id}-v" placeholder='value e.g. "US" or 100' value="${val}"/>
     <button class="rm-btn" onclick="rmCondRow('${id}')">✕</button>`;
   document.getElementById('cond-rows').appendChild(row);
+  // Set selected operator after render
+  const opSel=document.getElementById(id+'-op');
+  if(opSel) opSel.value=op;
   // Handle custom field input
   row.querySelector('.f-field').addEventListener('change',function(){
     if(this.value==='__custom__'){
@@ -914,10 +918,18 @@ async function createStep(){
   let meta={};
   try{const m=document.getElementById('ns-meta').value.trim();if(m) meta=JSON.parse(m)}catch(e){return toast('Invalid JSON','error')}
   try{
-    await call('POST',`/workflows/${curWfId}/steps`,{name,step_type:document.getElementById('ns-type').value,order:parseInt(document.getElementById('ns-order').value)||0,metadata_:meta});
+    const step=await call('POST',`/workflows/${curWfId}/steps`,{name,step_type:document.getElementById('ns-type').value,order:parseInt(document.getElementById('ns-order').value)||0,metadata_:meta});
+    // Auto-set as START if no start step defined yet
+    const wf=await call('GET',`/workflows/${curWfId}`);
+    if(!wf.start_step_id){
+      await call('PUT',`/workflows/${curWfId}`,{start_step_id:step.id});
+      toast('Step added and auto-set as START!','success',4000);
+    }else{
+      toast('Step added!','success');
+    }
     closeM('m-add-step');
     document.getElementById('ns-name').value='';document.getElementById('ns-meta').value='';document.getElementById('ns-order').value='0';
-    toast('Step added!','success');loadSteps();
+    loadSteps();
   }catch(e){toast(e.message,'error')}
 }
 async function delStep(id,name){
